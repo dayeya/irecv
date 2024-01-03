@@ -14,10 +14,18 @@ const IP: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
 const ADDRESS: SocketAddrV4 = SocketAddrV4::new(IP, PORT);
 
 fn main() {
-    let listener: TcpListener = TcpListener::bind(ADDRESS).unwrap();
-    if let Ok(addr) = listener.local_addr() {
-        println!("Irecv listening for connections at {}", addr);
-    } else {
-        panic!()
+    let listener: TcpListener = TcpListener::bind(ADDRESS).expect(
+    format!("ERROR: Could not start Irecv at {}", ADDRESS).as_str()
+    );
+    println!("INFO: Irecv listening for connections at {}", ADDRESS);
+
+    loop  {
+        match listener.accept() {
+            Ok((stream, client_addr)) => {
+                println!("Client connected at {:?}", client_addr);
+                handle_client(stream)
+            }
+            Err(e) => println!("ERROR: failed connection, {e}")
+        }
     }
 }
