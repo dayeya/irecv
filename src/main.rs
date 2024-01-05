@@ -1,19 +1,16 @@
 use core::fmt;
+use std::collections::HashMap;
 // use std::collections::HashMap;
 use std::thread;
 use std::io::{Read, Write};
 // use std::sync::{Arc, Mutex};
 // use std::collections::HashMap;
 use std::sync::mpsc::{Sender, Receiver, channel};
-use std::net::{Shutdown, TcpStream, TcpListener, SocketAddrV4, Ipv4Addr};
+use std::net::{Shutdown, TcpStream, TcpListener, SocketAddr, SocketAddrV4};
 
-const BUFFER: usize = 1024;
 const PORT: u16 = 60101;
-const IP: Ipv4Addr = Ipv4Addr::new(192, 168,1, 218);
-const ADDRESS: SocketAddrV4 = SocketAddrV4::new(IP, PORT);
-// const CLIENTS: Vec<Sender<Message>> = Vec::<Sender<Message>>::new();
-
-#[allow(dead_code)]
+const IP: &str = "192.168.1.218";
+const BUFFER: usize = 1024;
 enum Message {
     // NewConnection,
     // ClientAborted,
@@ -30,8 +27,12 @@ impl fmt::Display for Message {
     }
 }
 
-struct _Server {
-    clients: Vec<TcpStream>,
+struct Client {
+    addr: SocketAddr,
+}
+
+struct Server {
+    clients: HashMap<Client, TcpStream>,
 }
 
 fn server(messages: Receiver<Message>) -> Result<(), ()> {
@@ -46,6 +47,7 @@ fn server(messages: Receiver<Message>) -> Result<(), ()> {
         }
     }
 }
+
 
 fn handle_client(mut stream: TcpStream, messages: Sender<Message>) -> Result<(), ()> {
     stream.write(&"Hello, Welcome to the Irecv!\n".as_bytes()).map_err(
@@ -75,10 +77,11 @@ fn handle_client(mut stream: TcpStream, messages: Sender<Message>) -> Result<(),
 
 
 fn main() {
-    let listener = TcpListener::bind(ADDRESS).expect(
-        &format!("ERROR: Could not start Irecv at {ADDRESS}")
+    let address: SocketAddrV4 = format!("{IP}:{PORT}").parse().unwrap();
+    let listener: TcpListener = TcpListener::bind(address).expect(
+        &format!("ERROR: Could not start Irecv at {address}")
     );
-    println!("INFO: Irecv listening for connections at {}", ADDRESS);
+    println!("INFO: Irecv listening for connections at {}", address);
 
     let (sender, receive) = channel::<Message>();
     thread::spawn(|| server(receive));
